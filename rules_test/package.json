@@ -1,0 +1,13 @@
+{
+  "name": "minhas-receitas-rules-test",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "npx firebase emulators:exec --only firestore --project demo-minhas-receitas --config ../firebase.json \"node --test rules.test.js\""
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^6.0.0",
+    "firebase": "^13.4.0",
+    "firebase-tools": "^15.37.0"
+  }
+}

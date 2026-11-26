@@ -1,0 +1,36 @@
+rules_version = '2';
+
+// Cada usuário só enxerga e altera os próprios documentos em
+// users/{uid}/saved_recipes. Tudo o que não for liberado aqui é negado.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    // Mesma validação de SavedRecipe.validate (lib/domain/models/saved_recipe.dart)
+    function validRecipe(uid) {
+      let d = request.resource.data;
+      return d.ownerId == uid
+        && d.title is string && d.title.size() > 0 && d.title.size() <= 120
+        && d.mealId is string && d.mealId.size() > 0
+        && d.rating is int && d.rating >= 1 && d.rating <= 5
+        && d.note is string && d.note.size() <= 500;
+    }
+
+    match /users/{uid}/saved_recipes/{recipeId} {
+      allow read, delete: if isOwner(uid);
+      allow create: if isOwner(uid) && validRecipe(uid);
+      // ownerId, mealId e title não podem ser trocados depois de criados.
+      allow update: if isOwner(uid) && validRecipe(uid)
+        && request.resource.data.ownerId == resource.data.ownerId
+        && request.resource.data.mealId == resource.data.mealId
+        && request.resource.data.title == resource.data.title;
+    }
+  }
+}
